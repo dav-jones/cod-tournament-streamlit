@@ -7,35 +7,47 @@ import pandas as pd
 import streamlit as st
 
 ### set page config and title
-st.set_page_config(page_title='Cod Tournament')
-st.title('Cod Tournament')
-st.info('Make your selection and then click start to begin a tournament')
-st.error('There has been an error, refresh the page to start again')
-st.success('Done!')
+st.set_page_config(page_title='Cod Tournament Builder')
+st.title('Cod Tournament Builder')
+st.markdown('###')
+st.text('''
+-   points - kill = 1, placement = 1-5 from 5th to 1st
+-   update the filters and the leaderboard will automatically update
+-   if mid-tournament don't refresh, press R key, or the filters will reset
+''')
+st.markdown('####')
+st.markdown('____')
+st.markdown('####')
+st.subheader('Leaderboard')
+
+# ### input variables to build leaderboard - fixed for checks
+# platform = 'psn'
+# gamemode = 'Resurgence Trios'
+# duration_hours = 2
+# start_time = datetime.datetime.strptime('2021-07-22 20:00:00+00:00', '%Y-%m-%d %H:%M:%S%z')
+# end_time = start_time + datetime.timedelta(hours = duration_hours)
+# players = ['Dav-Jones','ws23100']
 
 ### create selection sidebar
-platform = st.sidebar.selectbox('Platform:', ['psn','xbl'])
-gamemode = st.sidebar.selectbox('Game mode:', ['Resurgence Duos','Resurgence Trios','Resurgence Quads'])
-date = st.sidebar.date_input('Tournament date')
-start_time = st.sidebar.time_input('Start time')
-end_time= st.sidebar.time_input('End time')
-players = st.sidebar.text_input('Usernames (comma separated)')
-st.sidebar.button('Start')
+platform_input = st.sidebar.selectbox('Platform:', ['psn','xbl'])
+gamemode_input = st.sidebar.selectbox('Game mode:', ['Resurgence Duos','Resurgence Trios','Resurgence Quads'])
+date_input = st.sidebar.date_input('Tournament start date:')
+time_input = st.sidebar.time_input('Tournament start time:')
+duration_input = st.sidebar.slider('Tournament duration:',min_value = 1, max_value = 5)
+players_input = st.sidebar.text_input('Usernames (comma separated no spaces):', 'Dav-Jones,ws23100', max_chars = 50)
 
-### input variables to build leaderboard
-platform = 'psn'
-players = ['Dav-Jones','ws23100']
-gamemode = 'Resurgence Trios'
-duration_hours = 2
-start_time = datetime.datetime.strptime('2021-07-22 20:00:00+00:00', '%Y-%m-%d %H:%M:%S%z')
-
-### calculate tournament end time
+### input variables to build leaderboard - dynamic based on widget inputs
+platform = platform_input
+gamemode = gamemode_input
+duration_hours = duration_input
+start_time = datetime.datetime.combine(date_input, time_input).astimezone()
 end_time = start_time + datetime.timedelta(hours = duration_hours)
+players = players_input.split(',')
 
 ### dataframe that collects match data for all usernames in players
 all_matches = pd.DataFrame()
 for username in players:
-
+    
     ### get tracker.gg json object using api
     conn = http.client.HTTPSConnection('api.tracker.gg')
     payload = ''
