@@ -52,7 +52,7 @@ testpath==0.4.4
 tornado==6.1
 traitlets==4.3.3
 typing-extensions==3.7.4.3
-urllib3==1.26.4
+urllib3==1.26.5
 virtualenv==20.4.3
 virtualenv-clone==0.5.4
 wcwidth==0.2.5
