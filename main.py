@@ -8,17 +8,6 @@ import streamlit as st
 
 st.set_page_config(page_title='Cod Tournament Builder', layout='wide')
 
-##### CACHED EXAMPLE #####
-
-# @st.cache
-# def test(num):
-#     return num * 2
-    
-# num = st.sidebar.slider('Tournament duration:',min_value = 1, max_value = 5)
-
-# st.write(test(num))
-
-
 ##### DYNAMIC AND CACHED #####
 
 @st.cache
@@ -78,11 +67,11 @@ def get_leaderboard(platform,gamemode,duration_hours,start_time,players):
 with st.sidebar.form(key ='tournament-details'):
 #     platform_input = st.selectbox('Platform:', ['psn','xbl'])
     gamemode_input = st.selectbox('Game mode:', ['Resurgence Duos','Resurgence Trios','Resurgence Quads'])
-    date_input = st.date_input('Tournament start date:')
-    time_input = st.time_input('Tournament start time:')
-    duration_input = st.slider('Tournament duration:',min_value = 1, max_value = 5)
-    players_input = st.text_input('Usernames (comma separated no spaces):', 'Dav-Jones,ws23100', max_chars = 50)
-    submit_inputs = st.form_submit_button(label = 'Get Results!')
+    date_input = st.date_input('Start date:', value=datetime.date(2021,7,22))
+    time_input = st.time_input('Start time:', value=datetime.time(20,0))
+    duration_input = st.slider('Duration:', value=2, min_value = 1, max_value = 5)
+    players_input = st.text_input('Usernames:', value='Dav-Jones, ws23100', max_chars = 100, help='Comma separated')
+    submit_inputs = st.form_submit_button(label='Get Results!')
 
 ### convert tournament details into format suitable for get_leaderboard function
 # platform = platform_input
@@ -90,14 +79,14 @@ platform = 'psn'
 gamemode = gamemode_input
 duration_hours = duration_input
 start_time = datetime.datetime.combine(date_input, time_input).astimezone()
-players = players_input.split(',')
+players = players_input.replace(" ", "").split(',')
     
 ### main page components
 st.title('Cod Tournament Builder')
 st.markdown('####')
 st.write('''
     - playstation only - update the filters and click 'Get Results!'
-    - if mid-tournament don't refresh, press R key, or the filters will reset
+    - if mid-tournament don't refresh, press R key or the filters will reset
     - points - kill = 1, placement = 1-5 from 5th to 1st
 ''')
 st.markdown('____')
