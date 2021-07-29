@@ -7,7 +7,7 @@ import pandas as pd
 import streamlit as st
 
 ### set page config and title
-st.set_page_config(page_title='Cod Tournament Builder')
+st.set_page_config(page_title='Cod Tournament Builder', layout='wide')
 st.title('Cod Tournament Builder')
 st.markdown('###')
 st.text('''
