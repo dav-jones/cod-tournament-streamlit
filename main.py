@@ -10,17 +10,19 @@ import streamlit as st
 st.set_page_config(page_title='Cod Tournament Builder', layout='wide')
 st.title('Cod Tournament Builder')
 st.markdown('###')
-st.text('''
--   points - kill = 1, placement = 1-5 from 5th to 1st
--   update the filters and the leaderboard will automatically update
--   if mid-tournament don't refresh, press R key, or the filters will reset
+st.write('''
+    - points - kill = 1, placement = 1-5 from 5th to 1st
+    - update the filters and the leaderboard will automatically update
+    - if mid-tournament don't refresh, press R key, or the filters will reset
 ''')
 st.markdown('####')
 st.markdown('____')
 st.markdown('####')
-st.subheader('Leaderboard')
+st.header('Leaderboard')
+st.markdown('###')
 
-# ### input variables to build leaderboard - fixed for checks
+
+# ### input variables to build leaderboard - fixed
 # platform = 'psn'
 # gamemode = 'Resurgence Trios'
 # duration_hours = 2
@@ -76,18 +78,17 @@ for username in players:
     
 ### match details between tournament start and end times (copy() to get rid of SettingWithCopyWarning)
 tournament_matches = all_matches[(all_matches['gamemode'] == gamemode) & (all_matches['timestamp'] >= start_time) & (all_matches['timestamp'] < end_time)].copy()
+tournament_matches.reset_index(drop=True, inplace=True)
 
-### calculate points based on placement and kills for each match
+### standard game mode - add more columns (headshots, wallbangs, guns, etc) to create other game modes
 tournament_matches.loc[tournament_matches.placement <= 5, 'placement_points'] = 6 - tournament_matches.placement
 tournament_matches.loc[tournament_matches.placement > 5, 'placement_points'] = 0                                        
 tournament_matches['kill_points'] = tournament_matches['kills']
 
-### aggregate points and rank usernames - ranking not working
-leaderboard = tournament_matches.groupby('username').sum()
+### standard game mode - aggregate to create leaderboard
+leaderboard = tournament_matches.groupby('username', as_index=False).sum() # stop usernames becoming indices
 leaderboard.drop(['placement','kills'], axis=1, inplace=True)
 leaderboard['total_points'] = leaderboard['placement_points'] + leaderboard['kill_points']
-leaderboard.sort_values('total_points', ascending = True)
-leaderboard.reset_index(inplace=True)
-leaderboard.insert(1, 'rank', leaderboard.index.values + 1)
+leaderboard.sort_values(['total_points'], inplace=True, ascending=False)
 
 st.table(leaderboard)
