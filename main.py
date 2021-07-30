@@ -43,8 +43,7 @@ def get_leaderboard(scoring,platform,gamemode,duration_hours,start_time,players)
             d.append((
                 username,
                 match['attributes']['id'],
-                ### convert time to ISO 8601 timestamp
-                datetime.datetime.strptime((match['metadata']['timestamp']), '%Y-%m-%dT%H:%M:%S%z'),
+                datetime.datetime.strptime((match['metadata']['timestamp']), '%Y-%m-%dT%H:%M:%S%z'), # convert time to ISO 8601 timestamp
                 match['metadata']['modeName'],
                 1,
                 match['segments'][0]['metadata']['placement'],
