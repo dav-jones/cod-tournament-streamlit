@@ -3,6 +3,7 @@
 ### import python modules
 import time
 import datetime
+import pytz
 import http.client
 import json
 import pandas as pd
@@ -110,7 +111,7 @@ scoring = scoring_input
 platform = 'psn'
 gamemode = gamemode_input
 duration_hours = duration_input
-start_time = datetime.datetime.combine(date_input, time_input).astimezone()
+start_time = datetime.datetime.combine(date_input, time_input).astimezone(pytz.timezone('Europe/London'))
 players = players_input.replace(' ','').split(',')
     
 ### main page components
