@@ -130,3 +130,5 @@ st.markdown('____')
 st.header('Leaderboard: ' + scoring + ' ' + gamemode)
 st.markdown('####')
 st.table(get_leaderboard(scoring,platform,gamemode,duration_hours,start_time,players))
+
+st.write(start_time)
