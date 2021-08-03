@@ -40,17 +40,37 @@ def get_leaderboard(scoring,platform,gamemode,duration_hours,start_time,players)
         ### create empty list and append details for dataframe conversion
         d = []
         for match in match_list:
-            d.append((
-                username,
-                match['attributes']['id'],
-                datetime.datetime.strptime((match['metadata']['timestamp']),'%Y-%m-%dT%H:%M:%S%z') + datetime.timedelta(hours=1),                 # convert time to ISO 8601 timestamp
-                match['metadata']['modeName'],
-                1,
-                match['segments'][0]['metadata']['placement'],
-                match['segments'][0]['stats']['kills']['value']
-            ))
 
-        player_matches = pd.DataFrame(d, columns=('username', 'id', 'timestamp', 'gamemode','games_played','placement', 'kills'))
+            d_data=[]
+            d_data.append(username)
+            d_data.append(match['attributes']['id'])
+            d_data.append(datetime.datetime.strptime((match['metadata']['timestamp']),'%Y-%m-%dT%H:%M:%S%z') + datetime.timedelta(hours=1)) # convert time to ISO 8601 timestamp, temporary fix for 1 hour bug on deployment
+            d_data.append(match['metadata']['modeName'])
+            d_data.append(1)
+            d_data.append(match['segments'][0]['metadata']['placement'])
+            d_data.append(match['segments'][0]['stats']['kills']['value'])
+            d_data.append(match['segments'][0]['stats']['deaths']['value'])
+            d_data.append(match['segments'][0]['stats']['executions']['value'])
+
+            # deal with KeyError on these data points    
+            try:
+                d_data.append(match['segments'][0]['stats']['objectiveBrMissionPickupTablet']['value'])
+            except KeyError:
+                d_data.append(0)
+            try:
+                d_data.append(match['segments'][0]['stats']['objectiveBrKioskBuy']['value'])
+            except KeyError:
+                d_data.append(0)
+            try:
+                d_data.append(match['segments'][0]['stats']['objectiveBrCacheOpen']['value'])
+            except KeyError:
+                d_data.append(0)
+
+            # final list of list of lists with data points
+            d.append(d_data)
+
+        player_matches = pd.DataFrame(d, columns=('username','id','timestamp','gamemode','games_played','placement','kills'
+                                                  ,'deaths','executions','contracts_started','shop_purchases','boxes_opened'))
         all_matches = all_matches.append(player_matches)
 
     ### match details between tournament start and end times (copy() to get rid of SettingWithCopyWarning)
@@ -67,7 +87,8 @@ def get_leaderboard(scoring,platform,gamemode,duration_hours,start_time,players)
 
         ### standard game mode - aggregate to create leaderboard
         leaderboard = tournament_matches.groupby('username', as_index=False).sum() # stop usernames becoming indices
-        leaderboard.drop(['placement','kills'], axis=1, inplace=True)
+        leaderboard.drop(['placement','kills','deaths','executions','contracts_started','shop_purchases','boxes_opened']
+                         , axis=1, inplace=True)
         leaderboard['total_points'] = leaderboard['placement_points'] + leaderboard['kill_points']
         leaderboard.sort_values(['total_points'], inplace=True, ascending=False)
         leaderboard.reset_index(inplace=True, drop=True)
@@ -78,12 +99,37 @@ def get_leaderboard(scoring,platform,gamemode,duration_hours,start_time,players)
 
         ### other game mode - aggregate to create leaderboard
         leaderboard = tournament_matches.groupby('username', as_index=False).sum() # stop usernames becoming indices
-        leaderboard.drop(['placement'], axis=1, inplace=True)
+        leaderboard.drop(['placement','deaths','executions','contracts_started','shop_purchases','boxes_opened']
+                         , axis=1, inplace=True)
         leaderboard.sort_values(['kills'], inplace=True, ascending=False)
         leaderboard.reset_index(inplace=True, drop=True)
         leaderboard.index += 1
         return leaderboard
     
+    elif scoring == 'Test Mode 1':
+
+        ### other game mode - aggregate to create leaderboard
+        leaderboard = tournament_matches.groupby('username', as_index=False).sum() # stop usernames becoming indices
+        leaderboard.drop(['placement','kills','executions']
+                         , axis=1, inplace=True)
+        leaderboard['total_points'] = (leaderboard['contracts_started'] * 3) + leaderboard['shop_purchases'] + leaderboard['boxes_opened'] - (leaderboard['deaths'] * 5)
+        leaderboard.sort_values(['total_points'], inplace=True, ascending=False)
+        leaderboard.reset_index(inplace=True, drop=True)
+        leaderboard.index += 1
+        return leaderboard
+   
+    elif scoring == 'Test Mode 2':
+
+        ### other game mode - aggregate to create leaderboard
+        leaderboard = tournament_matches.groupby('username', as_index=False).sum() # stop usernames becoming indices
+        leaderboard.drop(['placement','contracts_started','shop_purchases','boxes_opened']
+                         , axis=1, inplace=True)
+        leaderboard['total_points'] = (leaderboard['kills'] * 2) - leaderboard['deaths'] + (leaderboard['executions'] * 6)
+        leaderboard.sort_values(['total_points'], inplace=True, ascending=False)
+        leaderboard.reset_index(inplace=True, drop=True)
+        leaderboard.index += 1
+        return leaderboard
+
     else:
         st.error('There has been an error selecting a scoring system')
     
@@ -94,7 +140,7 @@ def get_leaderboard(scoring,platform,gamemode,duration_hours,start_time,players)
 
 ### sidebar form components to collect tournament details
 with st.sidebar.form(key ='tournament-details'):
-    scoring_input = st.selectbox('Scoring system:', ['Standard','Kills Only'])
+    scoring_input = st.selectbox('Scoring system:', ['Standard','Kills Only','Test Mode 1','Test Mode 2'])
 #     platform_input = st.selectbox('Platform:', ['psn','xbl'])
     gamemode_input = st.selectbox('Game mode:', ['Resurgence Duos','Resurgence Trios','Resurgence Quads'])
     date_input = st.date_input('Start date:') #, value=datetime.date(2021,7,22))
@@ -117,18 +163,18 @@ players = players_input.replace(' ','').split(',')
 st.title('Cod Tournament Builder')
 st.markdown('####')
 st.write('''
-    - playstation only - update the filters and click 'Get Results!'
+    - playstation and uk only - update the filters and click 'Get Results!'
     - if mid-tournament don't refresh, press R key or the filters will reset
         ''')
 st.markdown('####')
 with st.beta_expander('Scoring system breakdown', expanded=False):
     st.write('''
-             - standard - kill = 1, placement = 1 - 5 from 5th to 1st
-             - kills only - kill = 1
+             - standard - kill = +1, placement = +5 to +1 from 1st to 5th
+             - kills only - kill = +1
+             - test mode 1 - death = -5, contract = +3, shop purchase = +1, box open = +1
+             - test mode 2 - death = -1, kill = +2, execution = +6
             ''')
 st.markdown('____')
 st.header('Leaderboard: ' + scoring + ' ' + gamemode)
 st.markdown('####')
 st.table(get_leaderboard(scoring,platform,gamemode,duration_hours,start_time,players))
-
-st.write(start_time)
