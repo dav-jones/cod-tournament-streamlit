@@ -43,7 +43,7 @@ def get_leaderboard(scoring,platform,gamemode,duration_hours,start_time,players)
             d.append((
                 username,
                 match['attributes']['id'],
-                datetime.datetime.strptime((match['metadata']['timestamp']), '%Y-%m-%dT%H:%M:%S%z'), # convert time to ISO 8601 timestamp
+                datetime.datetime.strptime((match['metadata']['timestamp']),'%Y-%m-%dT%H:%M:%S%z') + datetime.timedelta(hours=1),                 # convert time to ISO 8601 timestamp
                 match['metadata']['modeName'],
                 1,
                 match['segments'][0]['metadata']['placement'],
@@ -97,8 +97,8 @@ with st.sidebar.form(key ='tournament-details'):
     scoring_input = st.selectbox('Scoring system:', ['Standard','Kills Only'])
 #     platform_input = st.selectbox('Platform:', ['psn','xbl'])
     gamemode_input = st.selectbox('Game mode:', ['Resurgence Duos','Resurgence Trios','Resurgence Quads'])
-    date_input = st.date_input('Start date:', value=datetime.date(2021,7,22))
-    time_input = st.time_input('Start time:', value=datetime.time(20,0))
+    date_input = st.date_input('Start date:') #, value=datetime.date(2021,7,22))
+    time_input = st.time_input('Start time:') #, value=datetime.time(20,0))
     duration_input = st.slider('Duration:', value=2, min_value = 1, max_value = 5)
     players_input = st.text_input('Usernames:', value='Dav-Jones, ws23100', max_chars = 100, help='Comma separated')
     st.markdown('####')
@@ -110,8 +110,7 @@ scoring = scoring_input
 platform = 'psn'
 gamemode = gamemode_input
 duration_hours = duration_input
-# temporary fix for 1 hour time bug on deployment
-start_time = ((datetime.datetime.combine(date_input, time_input) + datetime.timedelta(hours=1))).astimezone()
+start_time = datetime.datetime.combine(date_input, time_input).astimezone()
 players = players_input.replace(' ','').split(',')
     
 ### main page components
